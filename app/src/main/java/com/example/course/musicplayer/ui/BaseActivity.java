@@ -2,7 +2,6 @@ package com.example.course.musicplayer.ui;
 
 import android.app.ActivityOptions;
 import android.content.Intent;
-import android.os.PersistableBundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.app.FragmentManager;
@@ -17,11 +16,8 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.example.course.musicplayer.R;
-import com.example.course.musicplayer.utils.LogHelper;
 
 public class BaseActivity extends AppCompatActivity {
-
-    private static final String TAG = LogHelper.makeLogTag(BaseActivity.class);
 
     private Toolbar mToolbar;
     private ActionBarDrawerToggle mDrawerToggle;
@@ -34,11 +30,6 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
-        LogHelper.d(TAG, "Activity onCreate");
-
-
     }
 
     private final DrawerLayout.DrawerListener mDrawerListener = new DrawerLayout.DrawerListener() {
@@ -171,7 +162,7 @@ public class BaseActivity extends AppCompatActivity {
         mToolbar.setTitle(titleId);
     }
 
-    protected void initializeToolbar() {
+    protected void initializedToolbar() {
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         if (mToolbar == null) {
             throw new IllegalStateException("Layout is required to include a Toolbar with id " +

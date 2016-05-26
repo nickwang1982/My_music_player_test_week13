@@ -57,7 +57,6 @@ public class MediaItemViewHolder {
             holder = (MediaItemViewHolder) convertView.getTag();
             cachedState = (Integer) convertView.getTag(R.id.tag_mediaitem_state_cache);
         }
-
         holder.mTitleView.setText(description.getTitle());
         holder.mDescriptionView.setText(description.getSubtitle());
 
