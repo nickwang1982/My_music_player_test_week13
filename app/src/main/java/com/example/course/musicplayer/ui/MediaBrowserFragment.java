@@ -20,10 +20,14 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.example.course.musicplayer.R;
+import com.example.course.musicplayer.model.MusicProvider;
 
 
 
 import java.util.ArrayList;
+import java.util.List;
+
+import static com.example.course.musicplayer.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_ALBUM;
 
 
 public class MediaBrowserFragment extends Fragment {
@@ -32,6 +36,24 @@ public class MediaBrowserFragment extends Fragment {
     private static final String ARG_MEDIA_ID = "media_id";
 
     private BrowseAdapter mBrowserAdapter;
+
+    private MusicProvider mMusicProvider;
+
+    private final MusicProvider.Callback mProviderCallback = new MusicProvider.Callback() {
+        @Override
+        public void onMusicCatalogReady(boolean success) {
+            List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
+            mediaItems = mMusicProvider.getChildren(MEDIA_ID_MUSICS_BY_ALBUM, getResources());
+
+            mBrowserAdapter.clear();
+            for (MediaBrowserCompat.MediaItem item : mediaItems){
+                mBrowserAdapter.add(item);
+            }
+
+            mBrowserAdapter.notifyDataSetChanged();
+        }
+    };
+
 
     public MediaBrowserFragment() {
         // Required empty public constructor
@@ -53,20 +75,8 @@ public class MediaBrowserFragment extends Fragment {
             }
         });
 
-
-        //TODO: removew this fake data after data provider readly
-        mBrowserAdapter.clear();
-        for (int i=0; i<=15 ; i++) {
-            MediaDescriptionCompat description = new MediaDescriptionCompat.Builder()
-                    .setMediaId("Test_Media")
-                    .setTitle("Test Title" + i)
-                    .setSubtitle("This is Test sub title")
-                    .build();
-            MediaBrowserCompat.MediaItem testItem = new MediaBrowserCompat.MediaItem(description, MediaBrowserCompat.MediaItem.FLAG_PLAYABLE);
-            mBrowserAdapter.add(testItem);
-        }
-        mBrowserAdapter.notifyDataSetChanged();
-
+        mMusicProvider = new MusicProvider(getActivity());
+        mMusicProvider.retrieveMediaAsync(mProviderCallback);
         return rootView;
     }
 
