@@ -73,7 +73,6 @@ public class LocalMediaSource implements MusicProviderSource {
     private MediaMetadataCompat buildFromCursor(Cursor cursor) {
 
         String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
-        String singer = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
         String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
         String albumId = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
 
