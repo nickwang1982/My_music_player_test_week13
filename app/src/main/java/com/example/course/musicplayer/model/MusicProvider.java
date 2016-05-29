@@ -35,6 +35,7 @@ public class MusicProvider {
 
     // Categorized caches for music track data:
     private ConcurrentMap<String, List<MediaMetadataCompat>> mMusicListByAlbum;
+    private List<MediaMetadataCompat> mAllMusicList;
     private final ConcurrentMap<String, MutableMediaMetadata> mMusicListById;
 
     enum State {
@@ -54,6 +55,7 @@ public class MusicProvider {
         mSource = source;
         mMusicListByAlbum = new ConcurrentHashMap<>();
         mMusicListById = new ConcurrentHashMap<>();
+        mAllMusicList = new ArrayList<>();
 
     }
 
@@ -79,6 +81,17 @@ public class MusicProvider {
             return Collections.emptyList();
         }
         return mMusicListByAlbum.get(album);
+    }
+
+    /**
+     * Get all music tracks for root view
+     *
+     */
+    public Iterable<MediaMetadataCompat> getAllMusics() {
+        if (mCurrentState != State.INITIALIZED ) {
+            return Collections.emptyList();
+        }
+        return mAllMusicList;
     }
 
     /**
@@ -120,6 +133,15 @@ public class MusicProvider {
         }.execute();
     }
 
+    private synchronized void buildAllMusicLists() {
+        for (MutableMediaMetadata m : mMusicListById.values()) {
+            if (mAllMusicList == null) {
+                mAllMusicList = new ArrayList<>();
+            }
+            mAllMusicList.add(m.metadata);
+        }
+    }
+
     private synchronized void buildListsByAlbum() {
         ConcurrentMap<String, List<MediaMetadataCompat>> newMusicListByAlbum = new ConcurrentHashMap<>();
 
@@ -147,6 +169,7 @@ public class MusicProvider {
                     mMusicListById.put(musicId, new MutableMediaMetadata(musicId, item));
                 }
 
+                buildAllMusicLists();
                 buildListsByAlbum();
                 mCurrentState = State.INITIALIZED;
             }
@@ -168,8 +191,10 @@ public class MusicProvider {
         }
 
         if (MEDIA_ID_ROOT.equals(mediaId)) {
-            mediaItems.add(createBrowsableMediaItemForRoot(resources));
-
+//            mediaItems.add(createBrowsableMediaItemForRoot(resources));
+            for (MediaMetadataCompat metadata : getAllMusics()) {
+                mediaItems.add(createMediaItem(metadata, null));
+            }
         } else if (MEDIA_ID_MUSICS_BY_ALBUM.equals(mediaId)) {
             for (String album : getAlbums()) {
                 mediaItems.add(createBrowsableMediaItemForGenre(album, resources));
@@ -178,7 +203,7 @@ public class MusicProvider {
         } else if (mediaId.startsWith(MEDIA_ID_MUSICS_BY_ALBUM)) {
             String album = MediaIDHelper.getHierarchy(mediaId)[1];
             for (MediaMetadataCompat metadata : getMusicsByAlbum(album)) {
-                mediaItems.add(createMediaItem(metadata));
+                mediaItems.add(createMediaItem(metadata, MEDIA_ID_MUSICS_BY_ALBUM));
             }
 
         } else {
@@ -211,17 +236,28 @@ public class MusicProvider {
                 MediaBrowserCompat.MediaItem.FLAG_BROWSABLE);
     }
 
-
-
-
-    private MediaBrowserCompat.MediaItem createMediaItem(MediaMetadataCompat metadata) {
+    private MediaBrowserCompat.MediaItem createMediaItem(MediaMetadataCompat metadata, String hierarchy) {
         // Since mediaMetadata fields are immutable, we need to create a copy, so we
         // can set a hierarchy-aware mediaID. We will need to know the media hierarchy
         // when we get a onPlayFromMusicID call, so we can create the proper queue based
         // on where the music was selected from (by artist, by genre, random, etc)
-        String album = metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM);
-        String hierarchyAwareMediaID = MediaIDHelper.createMediaID(
-                metadata.getDescription().getMediaId(), MEDIA_ID_MUSICS_BY_ALBUM, album);
+
+        String hierarchyAwareMediaID ;
+        if (hierarchy != null) {
+            switch (hierarchy) {
+                case MEDIA_ID_MUSICS_BY_ALBUM:
+                    String album = metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM);
+                    hierarchyAwareMediaID = MediaIDHelper.createMediaID(
+                            metadata.getDescription().getMediaId(), MEDIA_ID_MUSICS_BY_ALBUM, album);
+                    break;
+                default:
+                    hierarchyAwareMediaID = MediaIDHelper.createMediaID(
+                            metadata.getDescription().getMediaId(), MEDIA_ID_ROOT);
+            }
+        } else {
+            hierarchyAwareMediaID = MediaIDHelper.createMediaID(
+                    metadata.getDescription().getMediaId(), MEDIA_ID_ROOT);
+        }
         MediaMetadataCompat copy = new MediaMetadataCompat.Builder(metadata)
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, hierarchyAwareMediaID)
                 .build();
@@ -229,5 +265,4 @@ public class MusicProvider {
                 MediaBrowserCompat.MediaItem.FLAG_PLAYABLE);
 
     }
-
 }

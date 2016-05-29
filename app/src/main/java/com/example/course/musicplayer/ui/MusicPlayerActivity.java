@@ -3,12 +3,16 @@ package com.example.course.musicplayer.ui;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.NavigationView;
 import android.support.v4.media.MediaBrowserCompat;
 import android.text.TextUtils;
 
 import com.example.course.musicplayer.R;
 import com.example.course.musicplayer.ui.MediaBrowserFragment.MediaFragmentListener;
 import com.example.course.musicplayer.utils.LogHelper;
+
+import static com.example.course.musicplayer.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_ALBUM;
+import static com.example.course.musicplayer.utils.MediaIDHelper.MEDIA_ID_ROOT;
 
 public class MusicPlayerActivity extends ExtendBaseActivity
         implements MediaFragmentListener {
@@ -48,11 +52,14 @@ public class MusicPlayerActivity extends ExtendBaseActivity
         if (savedInstanceState != null) {
             // If there is a saved media ID, use it
             mediaId = savedInstanceState.getString(SAVED_MEDIA_ID);
+        } else if (intent.hasExtra(SAVED_MEDIA_ID)) {
+            mediaId = intent.getExtras().getString(SAVED_MEDIA_ID);
         }
-        navigateToBrowser(mediaId);
+        navigateToBrowser(mediaId, false);
+        setNavigationItem(mediaId);
     }
 
-    private void navigateToBrowser(String mediaId) {
+    public void navigateToBrowser(String mediaId, boolean addToBackstack) {
         MediaBrowserFragment fragment = getBrowseFragment();
 
         if (fragment == null || !TextUtils.equals(fragment.getMediaId(), mediaId)) {
@@ -63,9 +70,7 @@ public class MusicPlayerActivity extends ExtendBaseActivity
                     R.animator.slide_in_from_right, R.animator.slide_out_to_left,
                     R.animator.slide_in_from_left, R.animator.slide_out_to_right);
             transaction.replace(R.id.container, fragment, FRAGMENT_TAG);
-            // If this is not the top level media (root), we add it to the fragment back stack,
-            // so that actionbar toggle and Back will work appropriately:
-            if (mediaId != null) {
+            if (addToBackstack) {
                 transaction.addToBackStack(null);
             }
             transaction.commit();
@@ -88,7 +93,7 @@ public class MusicPlayerActivity extends ExtendBaseActivity
             getSupportMediaController().getTransportControls()
                     .playFromMediaId(item.getMediaId(), null);
         } else if (item.isBrowsable()) {
-            navigateToBrowser(item.getMediaId());
+            navigateToBrowser(item.getMediaId(), true);
         } else {
             LogHelper.w(TAG, "Ignoring MediaItem that is neither browsable nor playable: ",
                     "mediaId=", item.getMediaId());
@@ -102,5 +107,13 @@ public class MusicPlayerActivity extends ExtendBaseActivity
             title = getString(R.string.app_name);
         }
         setTitle(title);
+    }
+
+    @Override
+    public void setNavigationItem(String mediaId) {
+        LogHelper.d(TAG, "Setting navigation view mediaId to ", mediaId);
+        if (mediaId != null) {
+            updateNavigationView(mediaId);
+        }
     }
 }

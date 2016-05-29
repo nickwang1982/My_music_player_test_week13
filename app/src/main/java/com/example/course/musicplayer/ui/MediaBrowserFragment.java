@@ -220,5 +220,6 @@ public class MediaBrowserFragment extends Fragment {
     public interface MediaFragmentListener extends MediaBrowserProvider {
         void onMediaItemSelected(MediaBrowserCompat.MediaItem item);
         void setToolbarTitle(CharSequence title);
+        void setNavigationItem(String mediaId);
     }
 }

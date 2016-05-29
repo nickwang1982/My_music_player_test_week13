@@ -17,15 +17,23 @@ import android.view.View;
 
 import com.example.course.musicplayer.R;
 
+import static com.example.course.musicplayer.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_ALBUM;
+import static com.example.course.musicplayer.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_SINGER;
+import static com.example.course.musicplayer.utils.MediaIDHelper.MEDIA_ID_ROOT;
+
 public class BaseActivity extends AppCompatActivity {
 
     private Toolbar mToolbar;
     private ActionBarDrawerToggle mDrawerToggle;
     private DrawerLayout mDrawerLayout;
+    private NavigationView mNavigationView;
 
     private boolean mToolbarInitialized;
 
     private int mItemToOpenWhenDrawerCloses = -1;
+
+    private static final String SAVED_MEDIA_ID="com.example.course.musicplayer.MEDIA_ID";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,20 +60,23 @@ public class BaseActivity extends AppCompatActivity {
             if (mItemToOpenWhenDrawerCloses >= 0) {
                 Bundle extras = ActivityOptions.makeCustomAnimation(
                         BaseActivity.this, R.anim.fade_in, R.anim.fade_out).toBundle();
+                Bundle mediaExtras = new Bundle();
 
                 Class activityClass = null;
                 switch (mItemToOpenWhenDrawerCloses) {
                     case R.id.navigation_allmusic:
-                        //TODO:add class later
-//                        activityClass = MusicPlayerActivity.class;
+                        activityClass = MusicPlayerActivity.class;
                         break;
+                    case R.id.navigation_album:
+                        activityClass = MusicPlayerActivity.class;
+                        mediaExtras.putString(SAVED_MEDIA_ID, MEDIA_ID_MUSICS_BY_ALBUM);
                     case R.id.navigation_playlists:
                         //TODO:add class later
 //                        activityClass = PlaceholderActivity.class;
                         break;
                 }
                 if (activityClass != null) {
-                    startActivity(new Intent(BaseActivity.this, activityClass), extras);
+                    startActivity(new Intent(BaseActivity.this, activityClass).putExtras(mediaExtras), extras);
                     finish();
                 }
             }
@@ -171,8 +182,8 @@ public class BaseActivity extends AppCompatActivity {
 
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (mDrawerLayout != null) {
-            NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-            if (navigationView == null) {
+            mNavigationView = (NavigationView) findViewById(R.id.nav_view);
+            if (mNavigationView == null) {
                 throw new IllegalStateException("Layout requires a NavigationView " +
                         "with id 'nav_view'");
             }
@@ -180,7 +191,7 @@ public class BaseActivity extends AppCompatActivity {
             mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, mToolbar,
                     R.string.open_content_drawer, R.string.close_content_drawer);
             mDrawerLayout.setDrawerListener(mDrawerListener);
-            populateDrawerItems(navigationView);
+            populateDrawerItems();
             setSupportActionBar(mToolbar);
             updateDrawerToggle();
         } else {
@@ -190,8 +201,8 @@ public class BaseActivity extends AppCompatActivity {
         mToolbarInitialized = true;
     }
 
-    private void populateDrawerItems(NavigationView navigationView) {
-        navigationView.setNavigationItemSelectedListener(
+    private void populateDrawerItems() {
+        mNavigationView.setNavigationItemSelectedListener(
                 new NavigationView.OnNavigationItemSelectedListener() {
                     @Override
                     public boolean onNavigationItemSelected(MenuItem item) {
@@ -201,8 +212,6 @@ public class BaseActivity extends AppCompatActivity {
                         return true;
                     }
                 });
-        //TODO: set state of sub activities
-
     }
 
     protected void updateDrawerToggle() {
@@ -218,6 +227,21 @@ public class BaseActivity extends AppCompatActivity {
         }
         if (isRoot) {
             mDrawerToggle.syncState();
+        }
+    }
+
+
+
+    protected void updateNavigationView(String mediaId) {
+        switch (mediaId) {
+            case MEDIA_ID_ROOT:
+                mNavigationView.setCheckedItem(R.id.navigation_allmusic);
+                break;
+            case MEDIA_ID_MUSICS_BY_ALBUM:
+                mNavigationView.setCheckedItem(R.id.navigation_album);
+                break;
+            default:
+                mNavigationView.setCheckedItem(R.id.navigation_allmusic);
         }
     }
 }
