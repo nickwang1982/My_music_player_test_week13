@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
 import android.support.v4.media.MediaBrowserServiceCompat;
 import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 
@@ -52,6 +53,16 @@ public class MusicService extends MediaBrowserServiceCompat {
 
     private static final String TAG = LogHelper.makeLogTag(MusicService.class.getSimpleName());
 
+    // The action of the incoming Intent indicating that it contains a command
+    // to be executed (see {@link #onStartCommand})
+    public static final String ACTION_CMD = "com.example.course.musicplayer.ACTION_CMD";
+    // The key in the extras of the incoming Intent indicating the command that
+    // should be executed (see {@link #onStartCommand})
+    public static final String CMD_NAME = "CMD_NAME";
+    // A value of a CMD_NAME key in the extras of the incoming Intent that
+    // indicates that the music playback should be paused (see {@link #onStartCommand})
+    public static final String CMD_PAUSE = "CMD_PAUSE";
+
     private MusicProvider mMusicProvider;
     private MediaSessionCompat mSession;
 
@@ -82,6 +93,18 @@ public class MusicService extends MediaBrowserServiceCompat {
      */
     @Override
     public int onStartCommand(Intent startIntent, int flags, int startId) {
+        if (startIntent != null) {
+            String action = startIntent.getAction();
+            String command = startIntent.getStringExtra(CMD_NAME);
+            if (ACTION_CMD.equals(action)) {
+                if (CMD_PAUSE.equals(command)) {
+                    // TODO: handle pause request();
+                }
+            } else {
+                // Try to handle the intent as a media button event wrapped by MediaButtonReceiver
+                MediaButtonReceiver.handleIntent(mSession, startIntent);
+            }
+        }
          return START_STICKY;
     }
 

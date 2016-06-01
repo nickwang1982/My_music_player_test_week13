@@ -2,6 +2,7 @@ package com.example.course.musicplayer.model;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.media.MediaBrowserCompat;
@@ -101,6 +102,30 @@ public class MusicProvider {
      */
     public MediaMetadataCompat getMusic(String musicId) {
         return mMusicListById.containsKey(musicId) ? mMusicListById.get(musicId).metadata : null;
+    }
+
+    public synchronized void updateMusicArt(String musicId, Bitmap albumArt, Bitmap icon) {
+        MediaMetadataCompat metadata = getMusic(musicId);
+        metadata = new MediaMetadataCompat.Builder(metadata)
+
+                // set high resolution bitmap in METADATA_KEY_ALBUM_ART. This is used, for
+                // example, on the lockscreen background when the media session is active.
+                .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArt)
+
+                // set small version of the album art in the DISPLAY_ICON. This is used on
+                // the MediaDescription and thus it should be small to be serialized if
+                // necessary
+                .putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, icon)
+
+                .build();
+
+        MutableMediaMetadata mutableMetadata = mMusicListById.get(musicId);
+        if (mutableMetadata == null) {
+            throw new IllegalStateException("Unexpected error: Inconsistent data structures in " +
+                    "MusicProvider");
+        }
+
+        mutableMetadata.metadata = metadata;
     }
 
     /**
