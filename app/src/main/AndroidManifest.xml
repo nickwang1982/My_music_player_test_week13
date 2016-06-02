@@ -37,6 +37,28 @@
             </intent-filter>
         </service>
 
+        <!-- A full screen activity showing controls and a seek bar for
+     the current playing music -->
+        <activity
+            android:name=".ui.FullScreenPlayerActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTop"
+            android:parentActivityName=".ui.MusicPlayerActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.MusicPlayerActivity"/>
+        </activity>
+
+
+        <!-- A receiver that will receive media buttons and send as
+    intents to your MediaBrowserServiceCompat implementation.
+    Required on pre-Lollipop. More information at
+    http://developer.android.com/reference/android/support/v4/media/session/MediaButtonReceiver.html -->
+        <receiver android:name="android.support.v4.media.session.MediaButtonReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
