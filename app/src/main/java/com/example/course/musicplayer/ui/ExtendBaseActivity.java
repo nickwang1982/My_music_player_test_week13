@@ -100,6 +100,9 @@ public abstract class ExtendBaseActivity extends BaseActivity implements MediaBr
     protected void onStop() {
         super.onStop();
         LogHelper.d(TAG, "Activity onStop");
+        if (getSupportMediaController() != null) {
+            getSupportMediaController().unregisterCallback(mMediaControllerCallback);
+        }
         mMediaBrowser.disconnect();
     }
 
