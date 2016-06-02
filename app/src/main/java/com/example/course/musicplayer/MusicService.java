@@ -1,6 +1,7 @@
 
 package com.example.course.musicplayer;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -12,6 +13,9 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 
 import com.example.course.musicplayer.model.MusicProvider;
+import com.example.course.musicplayer.playback.LocalPlayback;
+import com.example.course.musicplayer.playback.PlaybackManager;
+import com.example.course.musicplayer.playback.QueueManager;
 import com.example.course.musicplayer.utils.LogHelper;
 
 import java.util.List;
@@ -49,7 +53,7 @@ import static com.example.course.musicplayer.utils.MediaIDHelper.MEDIA_ID_ROOT;
  *      android.media.browse.MediaBrowserService
 
  */
-public class MusicService extends MediaBrowserServiceCompat {
+public class MusicService extends MediaBrowserServiceCompat implements PlaybackManager.PlaybackServiceCallback {
 
     private static final String TAG = LogHelper.makeLogTag(MusicService.class.getSimpleName());
 
@@ -65,6 +69,7 @@ public class MusicService extends MediaBrowserServiceCompat {
 
     private MusicProvider mMusicProvider;
     private MediaSessionCompat mSession;
+    private PlaybackManager mPlaybackManager;
 
     /*
      * (non-Javadoc)
@@ -82,9 +87,40 @@ public class MusicService extends MediaBrowserServiceCompat {
         // {@link #onLoadChildren(String, Result<List<MediaItem>>) onLoadChildren()}.
         mMusicProvider.retrieveMediaAsync(null /* Callback */);
 
+        QueueManager queueManager = new QueueManager(mMusicProvider, getResources(), new QueueManager.MetadataUpdateListener() {
+            @Override
+            public void onMetadataChanged(MediaMetadataCompat metadata) {
+                mSession.setMetadata(metadata);
+            }
+
+            @Override
+            public void onMetadataRetrieveError() {
+                mPlaybackManager.updatePlaybackState(getString(R.string.error_no_metadata));
+            }
+
+            @Override
+            public void onCurrentQueueIndexUpdated(int queueIndex) {
+                mPlaybackManager.handlePlayRequest();
+            }
+
+            @Override
+            public void onQueueUpdated(String title, List<MediaSessionCompat.QueueItem> newQueue) {
+                mSession.setQueue(newQueue);
+                mSession.setQueueTitle(title);
+            }
+        });
+
+        LocalPlayback playback = new LocalPlayback(this, mMusicProvider);
+        mPlaybackManager = new PlaybackManager(this, getResources(), queueManager, mMusicProvider, playback);
+
         // Start a new MediaSession
         mSession = new MediaSessionCompat(this, "MusicService");
         setSessionToken(mSession.getSessionToken());
+        mSession.setCallback(mPlaybackManager.getMediaSessionCallback());
+        mSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
+                MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+
+        mPlaybackManager.updatePlaybackState(null);
     }
 
     /**
@@ -98,7 +134,7 @@ public class MusicService extends MediaBrowserServiceCompat {
             String command = startIntent.getStringExtra(CMD_NAME);
             if (ACTION_CMD.equals(action)) {
                 if (CMD_PAUSE.equals(command)) {
-                    // TODO: handle pause request();
+                    mPlaybackManager.handlePauseRequest();
                 }
             } else {
                 // Try to handle the intent as a media button event wrapped by MediaButtonReceiver
@@ -117,6 +153,7 @@ public class MusicService extends MediaBrowserServiceCompat {
     @Override
     public void onDestroy() {
         LogHelper.d(TAG, "onDestroy");
+        mPlaybackManager.handleStopRequest(null);
         mSession.release();
     }
 
@@ -133,5 +170,29 @@ public class MusicService extends MediaBrowserServiceCompat {
                                @NonNull final Result<List<MediaItem>> result) {
         LogHelper.d(TAG, "OnLoadChildren: parentMediaId=", parentMediaId);
         result.sendResult(mMusicProvider.getChildren(parentMediaId, getResources()));
+    }
+
+    @Override
+    public void onPlaybackStart() {
+        if (!mSession.isActive()) {
+            mSession.setActive(true);
+        }
+
+        startService(new Intent(getApplicationContext(), MusicService.class));
+    }
+
+    @Override
+    public void onNotificationRequired() {
+
+    }
+
+    @Override
+    public void onPlaybackStop() {
+
+    }
+
+    @Override
+    public void onPlaybackStateUpdated(PlaybackStateCompat newState) {
+        mSession.setPlaybackState(newState);
     }
 }

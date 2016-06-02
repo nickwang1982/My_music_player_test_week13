@@ -9,7 +9,9 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaDescriptionCompat;
+import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,21 +42,29 @@ public class MediaBrowserFragment extends Fragment {
     private BrowseAdapter mBrowserAdapter;
     private String mMediaId;
     private MediaFragmentListener mMediaFragmentListener;
-//
-//    private final MusicProvider.Callback mProviderCallback = new MusicProvider.Callback() {
-//        @Override
-//        public void onMusicCatalogReady(boolean success) {
-//            List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
-//            mediaItems = mMusicProvider.getChildren(MEDIA_ID_MUSICS_BY_ALBUM, getResources());
-//
-//            mBrowserAdapter.clear();
-//            for (MediaBrowserCompat.MediaItem item : mediaItems){
-//                mBrowserAdapter.add(item);
-//            }
-//
-//            mBrowserAdapter.notifyDataSetChanged();
-//        }
-//    };
+
+    // Receive callbacks from the MediaController. Here we update our state such as which queue
+    // is being shown, the current title and description and the PlaybackState.
+    private final MediaControllerCompat.Callback mMediaControllerCallback = new MediaControllerCompat.Callback() {
+        @Override
+        public void onPlaybackStateChanged(PlaybackStateCompat state) {
+            super.onPlaybackStateChanged(state);
+            LogHelper.d(TAG, "Received state change: ", state);
+            mBrowserAdapter.notifyDataSetChanged();
+        }
+
+        @Override
+        public void onMetadataChanged(MediaMetadataCompat metadata) {
+            super.onMetadataChanged(metadata);
+            if (metadata == null) {
+                return;
+            }
+            LogHelper.d(TAG, "Received metadata change to media ",
+                    metadata.getDescription().getMediaId());
+            mBrowserAdapter.notifyDataSetChanged();
+        }
+    };
+
     private final MediaBrowserCompat.SubscriptionCallback mSubscriptionCallback =
         new MediaBrowserCompat.SubscriptionCallback() {
             @Override
@@ -100,9 +110,6 @@ public class MediaBrowserFragment extends Fragment {
                 mMediaFragmentListener.onMediaItemSelected(item);
             }
         });
-
-//        mMusicProvider = new MusicProvider(getActivity());
-//        mMusicProvider.retrieveMediaAsync(mProviderCallback);
         return rootView;
     }
 
@@ -142,6 +149,11 @@ public class MediaBrowserFragment extends Fragment {
         MediaBrowserCompat mediaBrowser = mMediaFragmentListener.getMediaBrowser();
         if (mediaBrowser != null && mediaBrowser.isConnected() && mMediaId != null) {
             mediaBrowser.unsubscribe(mMediaId);
+        }
+        MediaControllerCompat controller = ((FragmentActivity) getActivity())
+                .getSupportMediaController();
+        if (controller != null) {
+            controller.unregisterCallback(mMediaControllerCallback);
         }
     }
 
@@ -184,6 +196,11 @@ public class MediaBrowserFragment extends Fragment {
         mMediaFragmentListener.getMediaBrowser().subscribe(mMediaId, mSubscriptionCallback);
 
         // Add MediaController callback so we can redraw the list when metadata changes:
+        MediaControllerCompat controller = ((FragmentActivity) getActivity())
+                .getSupportMediaController();
+        if (controller != null) {
+            controller.registerCallback(mMediaControllerCallback);
+        }
     }
 
     private void updateTitle() {
@@ -212,6 +229,27 @@ public class MediaBrowserFragment extends Fragment {
         public View getView(int position, View convertView, ViewGroup parent) {
             MediaBrowserCompat.MediaItem item = getItem(position);
             int itemState = MediaItemViewHolder.STATE_NONE;
+            if (item.isPlayable()) {
+                itemState = MediaItemViewHolder.STATE_PLAYABLE;
+                MediaControllerCompat controller = ((FragmentActivity) getContext())
+                        .getSupportMediaController();
+                if (controller != null && controller.getMetadata() != null) {
+                    String currentPlaying = controller.getMetadata().getDescription().getMediaId();
+                    String musicId = MediaIDHelper.extractMusicIDFromMediaID(
+                            item.getDescription().getMediaId());
+                    if (currentPlaying != null && currentPlaying.equals(musicId)) {
+                        PlaybackStateCompat pbState = controller.getPlaybackState();
+                        if (pbState == null ||
+                                pbState.getState() == PlaybackStateCompat.STATE_ERROR) {
+                            itemState = MediaItemViewHolder.STATE_NONE;
+                        } else if (pbState.getState() == PlaybackStateCompat.STATE_PLAYING) {
+                            itemState = MediaItemViewHolder.STATE_PLAYING;
+                        } else {
+                            itemState = MediaItemViewHolder.STATE_PAUSED;
+                        }
+                    }
+                }
+            }
             return MediaItemViewHolder.setupView((Activity) getContext(), convertView, parent,
                     item.getDescription(), itemState);
         }

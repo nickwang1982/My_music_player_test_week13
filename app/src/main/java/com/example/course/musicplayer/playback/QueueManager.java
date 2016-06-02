@@ -76,6 +76,24 @@ public class QueueManager {
         return index >= 0;
     }
 
+    public boolean skipQueuePosition(int amount) {
+        int index = mCurrentIndex + amount;
+        if (index <0) {
+            // skip backwards before the first song will keep you on the first one
+            index = 0;
+        } else {
+            // skip forewards when in last song will cycle back to start of the queue
+            index %= mPlayingQueue.size();
+        }
+        if (!QueueHelper.isIndexPlayable(index, mPlayingQueue)) {
+            LogHelper.e(TAG, "Cannot increment queue index by ", amount,
+                    ". Current=", mCurrentIndex, " queue length=", mPlayingQueue.size());
+            return false;
+        }
+        mCurrentIndex = index;
+        return true;
+    }
+
     private static List<MediaSessionCompat.QueueItem> convertToQueue(
             Iterable<MediaMetadataCompat> tracks, String... categories) {
         List<MediaSessionCompat.QueueItem> queue = new ArrayList<>();
