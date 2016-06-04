@@ -3,6 +3,7 @@ package com.example.course.musicplayer.ui;
 import android.app.Fragment;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
@@ -70,6 +71,13 @@ public class PlaybackControlsFragment extends Fragment {
 
         mTitle.setText(metadata.getDescription().getTitle());
         mSubtitle.setText(metadata.getDescription().getSubtitle());
+
+        Bitmap defaultArt = BitmapFactory.decodeResource(getResources(),
+                R.mipmap.ic_playback_art);
+        if (isAdded()) {
+            mAlbumArt.setImageBitmap(defaultArt);
+        }
+
         String artUrl = null;
         if (metadata.getDescription().getIconUri() != null) {
             artUrl = metadata.getDescription().getIconUri().toString();

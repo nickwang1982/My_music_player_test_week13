@@ -18,6 +18,7 @@ package com.example.course.musicplayer.ui;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -297,6 +298,8 @@ public class FullScreenPlayerActivity extends BaseActivity {
 
     private void fetchImageAsync(@NonNull MediaDescriptionCompat description) {
         if (description.getIconUri() == null) {
+            Bitmap art = BitmapFactory.decodeResource(getResources(), R.drawable.ic_play_background);
+            mBackgroundImage.setImageBitmap(art);
             return;
         }
         String artUrl = description.getIconUri().toString();
