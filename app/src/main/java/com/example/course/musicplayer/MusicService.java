@@ -4,6 +4,7 @@ package com.example.course.musicplayer;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
 import android.support.v4.media.MediaBrowserServiceCompat;
@@ -71,6 +72,8 @@ public class MusicService extends MediaBrowserServiceCompat implements PlaybackM
     private MediaSessionCompat mSession;
     private PlaybackManager mPlaybackManager;
 
+    private MediaNotificationManager mNotificationManager;
+
     /*
      * (non-Javadoc)
      * @see android.app.Service#onCreate()
@@ -121,6 +124,12 @@ public class MusicService extends MediaBrowserServiceCompat implements PlaybackM
                 MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
 
         mPlaybackManager.updatePlaybackState(null);
+
+        try {
+            mNotificationManager = new MediaNotificationManager(this);
+        } catch (RemoteException e) {
+            throw new IllegalStateException("Could not create a MediaNotificationManager", e);
+        }
     }
 
     /**
@@ -154,6 +163,7 @@ public class MusicService extends MediaBrowserServiceCompat implements PlaybackM
     public void onDestroy() {
         LogHelper.d(TAG, "onDestroy");
         mPlaybackManager.handleStopRequest(null);
+        mNotificationManager.stopNotification();
         mSession.release();
     }
 
@@ -183,12 +193,12 @@ public class MusicService extends MediaBrowserServiceCompat implements PlaybackM
 
     @Override
     public void onNotificationRequired() {
-
+        mNotificationManager.startNotification();
     }
 
     @Override
     public void onPlaybackStop() {
-
+        stopForeground(true);
     }
 
     @Override
