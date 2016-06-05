@@ -4,20 +4,8 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.provider.MediaStore;
-import android.support.v4.media.MediaBrowserCompat;
-import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
-import android.util.Log;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -30,18 +18,6 @@ import static com.example.course.musicplayer.utils.MediaIDHelper.createMediaID;
 public class LocalMediaSource implements MusicProviderSource {
 
     private Context mContext;
-
-    private static final String JSON_MUSIC = "music";
-    private static final String JSON_TITLE = "title";
-    private static final String JSON_ALBUM = "album";
-    private static final String JSON_ARTIST = "artist";
-    private static final String JSON_GENRE = "genre";
-    private static final String JSON_SOURCE = "source";
-    private static final String JSON_IMAGE = "image";
-    private static final String JSON_TRACK_NUMBER = "trackNumber";
-    private static final String JSON_TOTAL_TRACK_COUNT = "totalTrackCount";
-    private static final String JSON_DURATION = "duration";
-    private static final String MEDIA_ID_MUSICS_BY_ALBUM = "__BY_ALBUM__";
 
     public LocalMediaSource(Context context) {
         mContext = context;
@@ -74,9 +50,6 @@ public class LocalMediaSource implements MusicProviderSource {
 
         String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
         String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
-        String albumId = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
-
-        long size = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.SIZE));
         int duration = cursor.getInt(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
         String url = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
         String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));

@@ -9,11 +9,9 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.util.Log;
 
 import com.example.course.musicplayer.MusicService;
 import com.example.course.musicplayer.R;
-import com.example.course.musicplayer.playback.Playback;
 import com.example.course.musicplayer.utils.LogHelper;
 
 /**
@@ -118,7 +116,6 @@ public abstract class ExtendBaseActivity extends BaseActivity implements MediaBr
             @Override
             public void onConnected() {
                 LogHelper.d(TAG, "Music service connected");
-                    //TODO: add connect actions later
                 try {
                     connectToSession(mMediaBrowser.getSessionToken());
                 } catch (RemoteException e) {

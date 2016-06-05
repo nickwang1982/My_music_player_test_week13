@@ -3,7 +3,6 @@ package com.example.course.musicplayer.model;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaDescriptionCompat;
@@ -216,7 +215,6 @@ public class MusicProvider {
         }
 
         if (MEDIA_ID_ROOT.equals(mediaId)) {
-//            mediaItems.add(createBrowsableMediaItemForRoot(resources));
             for (MediaMetadataCompat metadata : getAllMusics()) {
                 mediaItems.add(createMediaItem(metadata, null));
             }

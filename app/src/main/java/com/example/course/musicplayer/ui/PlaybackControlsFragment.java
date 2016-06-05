@@ -72,11 +72,6 @@ public class PlaybackControlsFragment extends Fragment {
         mTitle.setText(metadata.getDescription().getTitle());
         mSubtitle.setText(metadata.getDescription().getSubtitle());
 
-        Bitmap defaultArt = BitmapFactory.decodeResource(getResources(),
-                R.mipmap.ic_playback_art);
-        if (isAdded()) {
-            mAlbumArt.setImageBitmap(defaultArt);
-        }
 
         String artUrl = null;
         if (metadata.getDescription().getIconUri() != null) {
@@ -106,6 +101,13 @@ public class PlaybackControlsFragment extends Fragment {
                         }
                 );
             }
+        }
+
+
+        Bitmap defaultArt = BitmapFactory.decodeResource(getResources(),
+                R.mipmap.ic_playback_art);
+        if (isAdded() && artUrl == null) {
+            mAlbumArt.setImageBitmap(defaultArt);
         }
     }
 
